@@ -105,7 +105,7 @@ const Swap: React.FC<Props> = ({ ethPriceInUsd }) => {
     useState(0);
   const [errorMessage, seterrorMessage] = useState("");
 
-  library && library.setProvider(INFURA_API);
+  library && library.setProvider(Web3.givenProvider);
   const getBalance = async (contract: any, walletAddress: any) => {
     let balance = await contract.methods.balanceOf(walletAddress).call();
     return balance;
@@ -242,7 +242,7 @@ const Swap: React.FC<Props> = ({ ethPriceInUsd }) => {
               await getABI(DAI_TOKEN_ADDRESS),
               DAI_TOKEN_ADDRESS
             );
-            makeSwap(uniContract, daiContract, account, library, "10");
+            makeSwap(uniContract, daiContract, account, library, "1");
           }}
         >
           Sign Message

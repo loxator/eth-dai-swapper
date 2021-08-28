@@ -3,7 +3,7 @@ import { ETHERSCAN_API_KEY } from "../contstants/constants";
 const getABI = async (tokenAddress) => {
   try {
     const response = await axios.get(
-      `https://api.etherscan.io/api?module=contract&action=getabi&address=${tokenAddress}&apikey=${ETHERSCAN_API_KEY}`
+      `https://api-ropsten.etherscan.io/api?module=contract&action=getabi&address=${tokenAddress}&apikey=${ETHERSCAN_API_KEY}`
     );
     if (response) {
       return JSON.parse(response.data.result);
