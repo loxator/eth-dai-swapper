@@ -41,7 +41,7 @@ export const makeSwap = async (
   const route: Route = new Route([pair], DAI);
   const trade = new Trade(
     route,
-    new TokenAmount(DAI, library.utils.toWei(amount)),
+    new TokenAmount(DAI, library.utils.toWei(amount.toString())),
     TradeType.EXACT_INPUT
   );
 

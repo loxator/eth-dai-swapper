@@ -92,9 +92,10 @@ const Input = styled.input`
 
 type Props = {
   ethPriceInUsd: number;
+  daiPriceInEth: number;
 };
 
-const Swap: React.FC<Props> = ({ ethPriceInUsd }) => {
+const Swap: React.FC<Props> = ({ ethPriceInUsd, daiPriceInEth}) => {
   const { active, account, library, activate, deactivate } = useWeb3React();
   console.log("🚀 ~ file: Swap.tsx ~ line 93 ~ library", library);
   const [currentStep, setcurrentStep] = useState("Connect");
@@ -201,7 +202,7 @@ const Swap: React.FC<Props> = ({ ethPriceInUsd }) => {
         <Label>Ξ</Label>
         {active ? (
           <Label>
-            {accountBalance && ethPriceInUsd * parseFloat(accountBalance)}
+            {accountBalance && daiPriceInEth * parseFloat(accountBalance)}
           </Label>
         ) : (
           <Label>Not connected</Label>
@@ -242,7 +243,7 @@ const Swap: React.FC<Props> = ({ ethPriceInUsd }) => {
               await getABI(DAI_TOKEN_ADDRESS),
               DAI_TOKEN_ADDRESS
             );
-            makeSwap(uniContract, daiContract, account, library, "1");
+            makeSwap(uniContract, daiContract, account, library, accountBalance);
           }}
         >
           Sign Message

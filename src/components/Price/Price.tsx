@@ -26,7 +26,7 @@ const Price = () => {
       {isLoading && <Loader />}
       <PriceDiv>1 ETH :{" Ð " + ethPriceinUSD.toFixed(2)}</PriceDiv>
       <PriceDiv>1 DAI :{" Ξ " + daiPriceInEth}</PriceDiv>
-      <Swap ethPriceInUsd={ethPriceinUSD} />
+      <Swap ethPriceInUsd={ethPriceinUSD} daiPriceInEth={daiPriceInEth}/>
     </div>
   );
 };
