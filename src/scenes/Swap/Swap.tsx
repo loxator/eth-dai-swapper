@@ -126,7 +126,7 @@ const Swap: React.FC = () => {
   });
   const [uniContract, setuniContract] = useState(null);
   const [daiContract, setdaiContract] = useState(null);
-  const [currentNetwork, setcurrentNetwork] = useState<string>("mainnet");
+  const [currentNetwork, setcurrentNetwork] = useState<string>("main");
   const { isButtonLoading, setIsButtonLoading } = useContext(
     LoadingContext
   ) as ILoadingContext;
