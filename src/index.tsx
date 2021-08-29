@@ -10,12 +10,11 @@ ReactDOM.render(
   <React.StrictMode>
     <HelmetProvider>
       <Helmet>
-        <title>ETH/DAI Swapper</title>
+        <title>ESwapAway</title>
         <link
           rel="stylesheet"
           href="https://fonts.googleapis.com/css?family=Montserrat"
         />
-        
       </Helmet>
       <App />
     </HelmetProvider>
