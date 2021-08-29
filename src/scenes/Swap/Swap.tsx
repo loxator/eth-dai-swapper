@@ -1,18 +1,18 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { useWeb3React } from "@web3-react/core";
 import styled from "styled-components";
 import { injected } from "../../components/Wallet/connector";
 import Web3 from "web3";
 import {
   DAI_TOKEN_ADDRESS,
-  INFURA_API,
   UNISWAP_TOKEN_ADDRESS,
 } from "../../contstants/constants";
-import daiABI from "../../contstants/daiABI.json";
+
 import { AbiItem } from "web3-utils";
 import getABI from "../../api/getABI";
-import ethUtil from "ethereumjs-util";
-import { makeSwap } from "../../utils/Uniswap";
+
+import { approve, makeSwap } from "../../utils/Uniswap";
+import PriceContext, { PriceContextProps } from "../../context/PriceContext";
 
 const Layout = styled.div`
   width: 710px;
@@ -90,21 +90,31 @@ const Input = styled.input`
   }
 `;
 
-type Props = {
-  ethPriceInUsd: number;
-  daiPriceInEth: number;
-};
+// let uniContract: any = new library.eth.Contract(
+//     await getABI(UNISWAP_TOKEN_ADDRESS),
+//     UNISWAP_TOKEN_ADDRESS
+//   );
+//   let daiContract: any = new library.eth.Contract(
+//     await getABI(DAI_TOKEN_ADDRESS),
+//     DAI_TOKEN_ADDRESS
+//   );
+//   makeSwap(
+//     uniContract,
+//     daiContract,
+//     account,
+//     library,
+//     accountBalance
+//   );
 
-const Swap: React.FC<Props> = ({ ethPriceInUsd, daiPriceInEth}) => {
+const Swap: React.FC = () => {
+  const { daiPriceInEth } = useContext(PriceContext) as PriceContextProps;
   const { active, account, library, activate, deactivate } = useWeb3React();
-  console.log("🚀 ~ file: Swap.tsx ~ line 93 ~ library", library);
   const [currentStep, setcurrentStep] = useState("Connect");
   const [accountBalance, setaccountBalance] = useState("");
   const [maxAccountBalance, setmaxAccountBalance] = useState("");
-  const [accountBalanceInDecimal, setaccountBalanceInDecimal] = useState(0);
-  const [maxAccountBalanceInDecimal, setmaxAccountBalanceInDecimal] =
-    useState(0);
   const [errorMessage, seterrorMessage] = useState("");
+  const [uniContract, setuniContract] = useState(null);
+  const [daiContract, setdaiContract] = useState(null);
 
   library && library.setProvider(Web3.givenProvider);
   const getBalance = async (contract: any, walletAddress: any) => {
@@ -114,38 +124,40 @@ const Swap: React.FC<Props> = ({ ethPriceInUsd, daiPriceInEth}) => {
 
   useEffect(() => {
     if (account) {
-      let contract: any;
-      getABI(DAI_TOKEN_ADDRESS)
-        .then((res) => {
-          contract = new library.eth.Contract(
-            res as unknown as AbiItem,
-            DAI_TOKEN_ADDRESS
-          );
-        })
-        .then(() =>
-          getBalance(contract, account).then(function (result) {
-            setmaxAccountBalance(library.utils.fromWei(result));
-            setmaxAccountBalanceInDecimal(
-              parseFloat(library.utils.fromWei(result)).toFixed(
-                3
-              ) as unknown as number
-            );
-          })
+      const getUserBalance = async () => {
+        let contract = new library.eth.Contract(
+          await getABI(DAI_TOKEN_ADDRESS),
+          DAI_TOKEN_ADDRESS
         );
+        setmaxAccountBalance(
+          library.utils.fromWei(await getBalance(contract, account))
+        );
+      };
+      getUserBalance();
     }
   }, [account]);
+
+  useEffect(() => {
+    if (library) {
+      const setContracts = async () => {
+        let uniABI = await getABI(UNISWAP_TOKEN_ADDRESS);
+        let daiABI = await getABI(DAI_TOKEN_ADDRESS);
+        setuniContract(new library.eth.Contract(uniABI, UNISWAP_TOKEN_ADDRESS));
+        setdaiContract(new library.eth.Contract(daiABI, DAI_TOKEN_ADDRESS));
+      };
+      setContracts();
+    }
+  }, []);
   const resetState = () => {
     setcurrentStep("Connect");
     setaccountBalance("");
     setmaxAccountBalance("");
-    setaccountBalanceInDecimal(0);
-    setmaxAccountBalanceInDecimal(0);
     seterrorMessage("");
   };
 
   const onChangeHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (
-      parseFloat(e.target.value) > maxAccountBalanceInDecimal ||
+      parseFloat(e.target.value) > parseFloat(maxAccountBalance) ||
       parseFloat(e.target.value) < 0
     ) {
       seterrorMessage("Insufficient Balance");
@@ -155,10 +167,26 @@ const Swap: React.FC<Props> = ({ ethPriceInUsd, daiPriceInEth}) => {
     setaccountBalance(e.target.value);
   };
 
+  const onClickHandler = (currentStep: string) => {
+    switch (currentStep) {
+      case "Connect":
+        connect();
+        setcurrentStep("Approve");
+        break;
+      case "Approve":
+        approve(daiContract, account, library, accountBalance);
+        setcurrentStep("Swap");
+        break;
+      case "Swap":
+        makeSwap(uniContract, account, library, accountBalance);
+        break;
+      default:
+        break;
+    }
+  };
   const connect = async () => {
     try {
       await activate(injected);
-      setcurrentStep("Swap");
     } catch (error) {
       console.log("🚀 ~ file: Swap.tsx ~ line 65 ~ connect ~ error", error);
     }
@@ -182,13 +210,14 @@ const Swap: React.FC<Props> = ({ ethPriceInUsd, daiPriceInEth}) => {
             value={accountBalance}
             onChange={onChangeHandler}
             type="number"
+            placeholder="Input Amount"
           />
         ) : (
           <Label>Not connected</Label>
         )}
         {active && (
           <div>
-            <Label>{maxAccountBalanceInDecimal}</Label>
+            <Label>{maxAccountBalance}</Label>
             <Label
               className="max"
               onClick={() => setaccountBalance(maxAccountBalance)}
@@ -209,7 +238,10 @@ const Swap: React.FC<Props> = ({ ethPriceInUsd, daiPriceInEth}) => {
         )}
       </InfoDiv>
       <div style={{ display: "flex", justifyContent: "center" }}>
-        <Button onClick={() => connect()} disabled={!!errorMessage}>
+        <Button
+          onClick={() => onClickHandler(currentStep)}
+          disabled={!!errorMessage}
+        >
           <Label>{currentStep}</Label>
         </Button>
 
@@ -218,37 +250,6 @@ const Swap: React.FC<Props> = ({ ethPriceInUsd, daiPriceInEth}) => {
         </Button>
       </div>
       {errorMessage && <Label className="error">{errorMessage}</Label>}
-
-      {!!(library && account) && (
-        <button
-          style={{
-            height: "3rem",
-            borderRadius: "1rem",
-            cursor: "pointer",
-          }}
-          onClick={async () => {
-            // const signature = await library.eth.personal.sign(
-            //   "Helloooos",
-            //   account
-            // );
-            // const signingAddress = await library.eth.personal.ecRecover(
-            //   "Helloooos",
-            //   signature
-            // );
-            let uniContract: any = new library.eth.Contract(
-              await getABI(UNISWAP_TOKEN_ADDRESS),
-              UNISWAP_TOKEN_ADDRESS
-            );
-            let daiContract: any = new library.eth.Contract(
-              await getABI(DAI_TOKEN_ADDRESS),
-              DAI_TOKEN_ADDRESS
-            );
-            makeSwap(uniContract, daiContract, account, library, accountBalance);
-          }}
-        >
-          Sign Message
-        </button>
-      )}
     </Layout>
   );
 };

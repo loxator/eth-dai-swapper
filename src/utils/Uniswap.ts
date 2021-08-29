@@ -28,13 +28,25 @@ export const getPrice = async () => {
   };
 };
 
-//Doesn't work
-export const makeSwap = async (
-  uniContract: any,
-  daiContract: any,
-  account: any,
+export const approve = async (
+  daiContract: any | null,
+  account: string | null | undefined,
   library: any,
-  amount: any
+  value: string
+) => {
+  let count = await library.eth.getTransactionCount(account);
+  await daiContract.methods.approve(UNISWAP_TOKEN_ADDRESS, value).send({
+    from: account,
+    gasLimit: await library.eth.getBlock("latest").gasLimit,
+    gasPrice: await library.eth.getGasPrice(),
+    nonce: library.utils.toHex(count),
+  });
+};
+export const makeSwap = async (
+  uniContract: any | null,
+  account: string | null | undefined,
+  library: any,
+  amount: string
 ) => {
   const DAI: Token = await Fetcher.fetchTokenData(chainId, DAI_TOKEN_ADDRESS);
   const pair: Pair = await Fetcher.fetchPairData(DAI, WETH[chainId]);
@@ -55,16 +67,6 @@ export const makeSwap = async (
   const value = ethers.BigNumber.from(
     trade.inputAmount.raw.toString()
   ).toHexString();
-
-  var count = await library.eth.getTransactionCount(account);
-
-  let a = await daiContract.methods.approve(UNISWAP_TOKEN_ADDRESS, value).send({
-    from: account,
-    gasLimit: await library.eth.getBlock("latest").gasLimit,
-    gasPrice: await library.eth.getGasPrice(),
-    nonce: library.utils.toHex(count),
-  });
-  console.log("🚀 ~ file: Uniswap.ts ~ line 60 ~ a", a);
 
   const data = await uniContract.methods
     .swapExactTokensForETH(value, amountOutMin, path, to, deadline)
