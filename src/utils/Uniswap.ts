@@ -71,14 +71,19 @@ export const approveAndSwap = async (
   const value = ethers.BigNumber.from(
     trade.inputAmount.raw.toString()
   ).toHexString();
-  let approvalTx = await approve(daiContract, account, library, value);
-  console.log("🚀 ~ file: Uniswap.ts ~ line 75 ~ approvalTx", approvalTx);
-  const swapTx = await uniContract.methods
-    .swapExactTokensForETH(value, amountOutMin, path, to, deadline)
-    .send({
-      from: account,
-    });
-  console.log("🚀 ~ file: Uniswap.ts ~ line 67 ~ data", swapTx);
+  try {
+    let approvalTx = await approve(daiContract, account, library, value);
+    console.log("🚀 ~ file: Uniswap.ts ~ line 76 ~ approvalTx", approvalTx);
+
+    const swapTx = await uniContract.methods
+      .swapExactTokensForETH(value, amountOutMin, path, to, deadline)
+      .send({
+        from: account,
+      });
+    console.log("🚀 ~ file: Uniswap.ts ~ line 67 ~ data", swapTx);
+  } catch (error) {
+    console.log("🚀 ~ file: Uniswap.ts ~ line 86 ~ error", error);
+  }
 
   // console.log(`Transaction hash: ${tx.hash}`);
   // const receipt = await tx.wait();

@@ -12,6 +12,9 @@ import getABI from "../../api/getABI";
 
 import { approveAndSwap } from "../../utils/Uniswap";
 import PriceContext, { PriceContextProps } from "../../context/PriceContext";
+import LoadingContext, {
+  LoadingContextProps,
+} from "../../context/LoadingContext";
 
 const Layout = styled.div`
   width: 710px;
@@ -87,6 +90,9 @@ const Input = styled.input`
     -webkit-appearance: none;
     margin: 0;
   }
+  &:focus-visible {
+    outline-style: none;
+  }
 `;
 
 const Swap: React.FC = () => {
@@ -98,7 +104,9 @@ const Swap: React.FC = () => {
   const [errorMessage, seterrorMessage] = useState("");
   const [uniContract, setuniContract] = useState(null);
   const [daiContract, setdaiContract] = useState(null);
-
+  const { isLoading, setIsLoading } = useContext(
+    LoadingContext
+  ) as LoadingContextProps;
   library && library.setProvider(Web3.givenProvider);
   const getBalance = async (contract: any, walletAddress: any) => {
     let balance = await contract.methods.balanceOf(walletAddress).call();
@@ -165,6 +173,7 @@ const Swap: React.FC = () => {
           accountBalance
         );
         setcurrentStep("Swap");
+
         break;
 
       default:
@@ -198,6 +207,7 @@ const Swap: React.FC = () => {
             onChange={onChangeHandler}
             type="number"
             placeholder="Input Amount"
+            required
           />
         ) : (
           <Label>Not connected</Label>
@@ -227,7 +237,9 @@ const Swap: React.FC = () => {
       <div style={{ display: "flex", justifyContent: "center" }}>
         <Button
           onClick={() => onClickHandler(currentStep)}
-          disabled={!!errorMessage}
+          disabled={
+            !!errorMessage || (!accountBalance && currentStep !== "Connect")
+          }
         >
           <Label>{currentStep}</Label>
         </Button>
