@@ -15,7 +15,7 @@ import {
   DAI_TOKEN_ADDRESS,
   UNISWAP_TOKEN_ADDRESS,
 } from "../contstants/constants";
-const chainId = ChainId.ROPSTEN;
+const chainId = ChainId.MAINNET;
 
 export const getPrice = async () => {
   const DAI: Token = await Fetcher.fetchTokenData(chainId, DAI_TOKEN_ADDRESS);
