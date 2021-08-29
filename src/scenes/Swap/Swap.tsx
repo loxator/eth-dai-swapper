@@ -244,7 +244,7 @@ const Swap: React.FC = () => {
   };
 
   if (currentNetwork !== "main") {
-    //return <Message type="error" message="Please switch to MainNet" />;
+    return <Message type="error" message="Please switch to MainNet" />;
   }
   return (
     <Layout>
