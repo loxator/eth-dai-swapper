@@ -1,8 +1,8 @@
 import { createContext } from "react";
-export interface PriceContextProps {
+export interface IPriceContext {
   ethPriceinUSD: number;
   daiPriceInEth: number;
 }
-const PriceContext = createContext<PriceContextProps | null>(null);
+const PriceContext = createContext<IPriceContext | null>(null);
 
 export default PriceContext;

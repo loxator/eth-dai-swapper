@@ -42,7 +42,7 @@ const approve = async (
       gasPrice: await library.eth.getGasPrice(),
       nonce: library.utils.toHex(count),
     });
-  console.log("🚀 ~ file: Uniswap.ts ~ line 44 ~ tx ~ tx", tx);
+  return tx;
 };
 
 export const approveAndSwap = async (
@@ -80,9 +80,19 @@ export const approveAndSwap = async (
       .send({
         from: account,
       });
-    console.log("🚀 ~ file: Uniswap.ts ~ line 67 ~ data", swapTx);
-  } catch (error) {
+    if (swapTx.blockHash) {
+      return {
+        success: true,
+        message: `Success! 🎉 Transaction was mined in block ${swapTx.blockNumber}`,
+      };
+    }
+    throw Error("Something went wrong!");
+  } catch (error: any) {
     console.log("🚀 ~ file: Uniswap.ts ~ line 86 ~ error", error);
+    return {
+      success: false,
+      message: error.message || "An Unknown error has occured",
+    };
   }
 
   // console.log(`Transaction hash: ${tx.hash}`);

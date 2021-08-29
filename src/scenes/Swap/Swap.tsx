@@ -11,10 +11,10 @@ import {
 import getABI from "../../api/getABI";
 
 import { approveAndSwap } from "../../utils/Uniswap";
-import PriceContext, { PriceContextProps } from "../../context/PriceContext";
-import LoadingContext, {
-  LoadingContextProps,
-} from "../../context/LoadingContext";
+import PriceContext, { IPriceContext } from "../../context/PriceContext";
+import LoadingContext, { ILoadingContext } from "../../context/LoadingContext";
+import ButtonLoader from "../../components/Loader/ButtonLoader";
+import Message from "../../components/Error/Error";
 
 const Layout = styled.div`
   width: 710px;
@@ -67,14 +67,28 @@ const Label = styled.span`
   }
 `;
 
-const Button = styled.button`
+interface IButton {
+  actionButton?: boolean;
+  isButtonLoading?: boolean;
+}
+
+const Button = styled.button<IButton>`
   background: #ffffff;
   border-radius: 30px;
   width: 200px;
   padding: 10px;
   margin: 0 10px;
+  ${({ actionButton }) =>
+    actionButton &&
+    `
+    display: flex;
+    width: auto;
+    align-items: center;
+    justify-content: center;
+  `}
   &:disabled {
-    display: none;
+    display: ${({ actionButton }) => !actionButton && "none"};
+    background: ${({ actionButton }) => actionButton && "#ccc"};
   }
 `;
 
@@ -95,23 +109,43 @@ const Input = styled.input`
   }
 `;
 
+interface IMessage {
+  type: string;
+  message: string;
+}
+
 const Swap: React.FC = () => {
-  const { daiPriceInEth } = useContext(PriceContext) as PriceContextProps;
+  const { daiPriceInEth } = useContext(PriceContext) as IPriceContext;
   const { active, account, library, activate, deactivate } = useWeb3React();
-  const [currentStep, setcurrentStep] = useState("Connect");
-  const [accountBalance, setaccountBalance] = useState("");
-  const [maxAccountBalance, setmaxAccountBalance] = useState("");
-  const [errorMessage, seterrorMessage] = useState("");
+  const [currentStep, setcurrentStep] = useState<string>("Connect");
+  const [accountBalance, setaccountBalance] = useState<string>("");
+  const [maxAccountBalance, setmaxAccountBalance] = useState<string>("");
+  const [message, setMessage] = useState<IMessage>({
+    message: "",
+    type: "sucess",
+  });
   const [uniContract, setuniContract] = useState(null);
   const [daiContract, setdaiContract] = useState(null);
-  const { isLoading, setIsLoading } = useContext(
+  const [currentNetwork, setcurrentNetwork] = useState<string>("mainnet");
+  const { isButtonLoading, setIsButtonLoading } = useContext(
     LoadingContext
-  ) as LoadingContextProps;
+  ) as ILoadingContext;
+
   library && library.setProvider(Web3.givenProvider);
+
   const getBalance = async (contract: any, walletAddress: any) => {
     let balance = await contract.methods.balanceOf(walletAddress).call();
     return balance;
   };
+
+  useEffect(() => {
+    if (library) {
+      const getNetwork = async () => {
+        setcurrentNetwork(await library.eth.net.getNetworkType());
+      };
+      getNetwork();
+    }
+  }, [library]);
 
   useEffect(() => {
     if (account) {
@@ -126,6 +160,7 @@ const Swap: React.FC = () => {
       };
       getUserBalance();
     }
+    // eslint-disable-next-line
   }, [account]);
 
   useEffect(() => {
@@ -143,7 +178,8 @@ const Swap: React.FC = () => {
     setcurrentStep("Connect");
     setaccountBalance("");
     setmaxAccountBalance("");
-    seterrorMessage("");
+    setMessage({ message: "", type: "success" });
+    setIsButtonLoading(false);
   };
 
   const onChangeHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -151,9 +187,9 @@ const Swap: React.FC = () => {
       parseFloat(e.target.value) > parseFloat(maxAccountBalance) ||
       parseFloat(e.target.value) < 0
     ) {
-      seterrorMessage("Insufficient Balance");
+      setMessage({ message: "Insufficient Balance", type: "error" });
     } else {
-      seterrorMessage("");
+      setMessage({ message: "", type: "success" });
     }
     setaccountBalance(e.target.value);
   };
@@ -165,15 +201,26 @@ const Swap: React.FC = () => {
         setcurrentStep("Approve & Swap");
         break;
       case "Approve & Swap":
-        await approveAndSwap(
+        setIsButtonLoading(true);
+        const tx = await approveAndSwap(
           uniContract,
           daiContract,
           account,
           library,
           accountBalance
         );
-        setcurrentStep("Swap");
 
+        if (!tx.success) {
+          setMessage({ type: "error", message: tx.message });
+        } else {
+          setMessage({ type: "success", message: tx.message });
+          setmaxAccountBalance(
+            (
+              parseFloat(maxAccountBalance) - parseFloat(accountBalance)
+            ).toString()
+          );
+        }
+        setIsButtonLoading(false);
         break;
 
       default:
@@ -195,6 +242,10 @@ const Swap: React.FC = () => {
       console.log("🚀 ~ file: Swap.tsx ~ line 75 ~ disconnect ~ error", error);
     }
   };
+
+  if (currentNetwork !== "main") {
+    //return <Message type="error" message="Please switch to MainNet" />;
+  }
   return (
     <Layout>
       <Title>Swap</Title>
@@ -238,17 +289,24 @@ const Swap: React.FC = () => {
         <Button
           onClick={() => onClickHandler(currentStep)}
           disabled={
-            !!errorMessage || (!accountBalance && currentStep !== "Connect")
+            !!message.message ||
+            (!accountBalance && currentStep !== "Connect") ||
+            isButtonLoading ||
+            parseInt(accountBalance) === 0
           }
+          actionButton
         >
           <Label>{currentStep}</Label>
+          {isButtonLoading && <ButtonLoader />}
         </Button>
 
         <Button onClick={disconnect} disabled={!active}>
           <Label>Disconnect</Label>
         </Button>
       </div>
-      {errorMessage && <Label className="error">{errorMessage}</Label>}
+      {message?.message && (
+        <Message type={message.type} message={message.message} />
+      )}
     </Layout>
   );
 };

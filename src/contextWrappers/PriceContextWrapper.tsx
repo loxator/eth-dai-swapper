@@ -2,18 +2,23 @@ import PriceContext from "../context/PriceContext";
 import { useState, useEffect } from "react";
 import { getPrice } from "../utils/Uniswap";
 import { useContext } from "react";
-import LoadingContext, { LoadingContextProps } from "../context/LoadingContext";
+import LoadingContext, { ILoadingContext } from "../context/LoadingContext";
 const PriceContextWrapper: React.FC = ({ children }) => {
   const [ethPriceinUSD, setethPriceinUSD] = useState(0);
   const [daiPriceInEth, setdaiPriceInEth] = useState(0);
-  const { setIsLoading } = useContext(LoadingContext) as LoadingContextProps;
+  const { setIsFullScreenLoading } = useContext(
+    LoadingContext
+  ) as ILoadingContext;
+  
+  
   useEffect(() => {
-    setIsLoading(true);
+    setIsFullScreenLoading(true);
     getPrice().then((currentPrice) => {
       setethPriceinUSD(parseFloat(currentPrice.eth));
       setdaiPriceInEth(parseFloat(currentPrice.dai));
-      setIsLoading(false);
+      setIsFullScreenLoading(false);
     });
+    // eslint-disable-next-line
   }, []);
 
   return (

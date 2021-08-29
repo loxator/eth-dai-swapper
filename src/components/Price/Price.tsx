@@ -1,8 +1,6 @@
 import { useContext } from "react";
-import PriceContext, { PriceContextProps } from "../../context/PriceContext";
-import LoadingContext, {
-  LoadingContextProps,
-} from "../../context/LoadingContext";
+import PriceContext, { IPriceContext } from "../../context/PriceContext";
+import LoadingContext, { ILoadingContext } from "../../context/LoadingContext";
 import styled from "styled-components";
 
 import Loader from "../../components/Loader/Loader";
@@ -13,12 +11,12 @@ const PriceDiv = styled.div`
 const Price: React.FC = () => {
   const { ethPriceinUSD, daiPriceInEth } = useContext(
     PriceContext
-  ) as PriceContextProps;
+  ) as IPriceContext;
 
-  const { isLoading } = useContext(LoadingContext) as LoadingContextProps;
+  const { isFullScreenLoading } = useContext(LoadingContext) as ILoadingContext;
   return (
     <div>
-      {isLoading && <Loader />}
+      {isFullScreenLoading && <Loader />}
       <PriceDiv>1 ETH :{" Ð " + ethPriceinUSD.toFixed(2)}</PriceDiv>
       <PriceDiv>1 DAI :{" Ξ " + daiPriceInEth}</PriceDiv>
     </div>
