@@ -4,15 +4,17 @@ import LoadingContext, {
   LoadingContextProps,
 } from "../../context/LoadingContext";
 import styled from "styled-components";
-import Swap from "../../scenes/Swap/Swap";
+
 import Loader from "../../components/Loader/Loader";
 
 const PriceDiv = styled.div`
   padding: 10px;
 `;
 const Price: React.FC = () => {
-  const { ethPriceinUSD, daiPriceInEth } = useContext(PriceContext) as PriceContextProps;
-  
+  const { ethPriceinUSD, daiPriceInEth } = useContext(
+    PriceContext
+  ) as PriceContextProps;
+
   const { isLoading } = useContext(LoadingContext) as LoadingContextProps;
   return (
     <div>

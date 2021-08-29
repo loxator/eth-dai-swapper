@@ -8,10 +8,9 @@ import {
   UNISWAP_TOKEN_ADDRESS,
 } from "../../contstants/constants";
 
-import { AbiItem } from "web3-utils";
 import getABI from "../../api/getABI";
 
-import { approve, makeSwap } from "../../utils/Uniswap";
+import { approveAndSwap } from "../../utils/Uniswap";
 import PriceContext, { PriceContextProps } from "../../context/PriceContext";
 
 const Layout = styled.div`
@@ -90,22 +89,6 @@ const Input = styled.input`
   }
 `;
 
-// let uniContract: any = new library.eth.Contract(
-//     await getABI(UNISWAP_TOKEN_ADDRESS),
-//     UNISWAP_TOKEN_ADDRESS
-//   );
-//   let daiContract: any = new library.eth.Contract(
-//     await getABI(DAI_TOKEN_ADDRESS),
-//     DAI_TOKEN_ADDRESS
-//   );
-//   makeSwap(
-//     uniContract,
-//     daiContract,
-//     account,
-//     library,
-//     accountBalance
-//   );
-
 const Swap: React.FC = () => {
   const { daiPriceInEth } = useContext(PriceContext) as PriceContextProps;
   const { active, account, library, activate, deactivate } = useWeb3React();
@@ -147,7 +130,7 @@ const Swap: React.FC = () => {
       };
       setContracts();
     }
-  }, []);
+  }, [library]);
   const resetState = () => {
     setcurrentStep("Connect");
     setaccountBalance("");
@@ -167,19 +150,23 @@ const Swap: React.FC = () => {
     setaccountBalance(e.target.value);
   };
 
-  const onClickHandler = (currentStep: string) => {
+  const onClickHandler = async (currentStep: string) => {
     switch (currentStep) {
       case "Connect":
         connect();
-        setcurrentStep("Approve");
+        setcurrentStep("Approve & Swap");
         break;
-      case "Approve":
-        approve(daiContract, account, library, accountBalance);
+      case "Approve & Swap":
+        await approveAndSwap(
+          uniContract,
+          daiContract,
+          account,
+          library,
+          accountBalance
+        );
         setcurrentStep("Swap");
         break;
-      case "Swap":
-        makeSwap(uniContract, account, library, accountBalance);
-        break;
+
       default:
         break;
     }

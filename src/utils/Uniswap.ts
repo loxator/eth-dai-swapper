@@ -13,7 +13,6 @@ import {
 import { ethers } from "ethers";
 import {
   DAI_TOKEN_ADDRESS,
-  INFURA_API,
   UNISWAP_TOKEN_ADDRESS,
 } from "../contstants/constants";
 const chainId = ChainId.ROPSTEN;
@@ -28,22 +27,27 @@ export const getPrice = async () => {
   };
 };
 
-export const approve = async (
+const approve = async (
   daiContract: any | null,
   account: string | null | undefined,
   library: any,
   value: string
 ) => {
   let count = await library.eth.getTransactionCount(account);
-  await daiContract.methods.approve(UNISWAP_TOKEN_ADDRESS, value).send({
-    from: account,
-    gasLimit: await library.eth.getBlock("latest").gasLimit,
-    gasPrice: await library.eth.getGasPrice(),
-    nonce: library.utils.toHex(count),
-  });
+  let tx = await daiContract.methods
+    .approve(UNISWAP_TOKEN_ADDRESS, value)
+    .send({
+      from: account,
+      gasLimit: await library.eth.getBlock("latest").gasLimit,
+      gasPrice: await library.eth.getGasPrice(),
+      nonce: library.utils.toHex(count),
+    });
+  console.log("🚀 ~ file: Uniswap.ts ~ line 44 ~ tx ~ tx", tx);
 };
-export const makeSwap = async (
+
+export const approveAndSwap = async (
   uniContract: any | null,
+  daiContract: any | null,
   account: string | null | undefined,
   library: any,
   amount: string
@@ -67,13 +71,14 @@ export const makeSwap = async (
   const value = ethers.BigNumber.from(
     trade.inputAmount.raw.toString()
   ).toHexString();
-
-  const data = await uniContract.methods
+  let approvalTx = await approve(daiContract, account, library, value);
+  console.log("🚀 ~ file: Uniswap.ts ~ line 75 ~ approvalTx", approvalTx);
+  const swapTx = await uniContract.methods
     .swapExactTokensForETH(value, amountOutMin, path, to, deadline)
     .send({
       from: account,
     });
-  console.log("🚀 ~ file: Uniswap.ts ~ line 67 ~ data", data);
+  console.log("🚀 ~ file: Uniswap.ts ~ line 67 ~ data", swapTx);
 
   // console.log(`Transaction hash: ${tx.hash}`);
   // const receipt = await tx.wait();
