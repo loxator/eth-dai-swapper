@@ -18,3 +18,7 @@ Run `yarn && yarn start`, to install dependencies and then start the local devel
 - In `Uniswap.ts`, change `const chainId = ChainId.MAINNET;` to `const chainId = ChainId.Ropsten`;
 
 - Comment out lines `246, 247 & 248` in `Swap.tsx`
+
+## Deployed
+
+You can visit the little project at https://swapaway.vercel.app
